@@ -29,17 +29,19 @@ jobs:
           file assets/teeth.mp3
           ffprobe -v error -show_entries format=format_name,duration             -of default=noprint_wrappers=1 assets/teeth.mp3
 
-      - name: Build harmless test program
+      - name: Embed internal.cpp as test data
         run: |
           set -euxo pipefail
-          c++ -std=c++17 -O2 -s src/payload_test.cpp -o output/payload_test
-
-      - name: Verify generated MP3
-        run: |
-          set -euxo pipefail
-          cp assets/teeth.mp3 output/teeth.mp3
+          python3 scripts/build_teeth.py
           test -s output/teeth.mp3
           sha256sum output/teeth.mp3
+
+      - name: Verify MP3 and embedded fixture
+        run: |
+          set -euxo pipefail
+          ffprobe -v error output/teeth.mp3 >/dev/null
+          grep -a -q "MP3SOURCE-TEST-V1" output/teeth.mp3
+          grep -a -q "Internal test fixture OK" output/teeth.mp3
 
       - name: Upload MP3 artifact
         uses: actions/upload-artifact@v4
